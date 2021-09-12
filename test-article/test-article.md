@@ -7,3 +7,5 @@ Title: Coucou
 Too lazy to remove the test article.
 
 Date format is important or sorting might be compromised :) 
+
+You can [add attachments](./test-data.csv).
