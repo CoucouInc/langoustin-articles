@@ -26,7 +26,7 @@ All that is left is then to find the coefficients of %$M$% that will yield the b
 As said before, the idea is to make playlists that most people will be happy with, so since it is such a subjective problem, we asked feedback from different people, in the form of an online survey.
 
 People were presented with three different, thirty seconds-long excerpts of songs, and had to point the one that they felt was the most dissimilar compared to the others:
-<img src='https://raw.githubusercontent.com/CoucouInc/langoustin-articles/main/metric-learning/survey.png'>
+<img src="survey.png">
 
 Each answer gives us the following information: given %$x_1$%, %$x_2$%, and %$x_3$% three songs, if the user picked %$x_2$% as the odd one out, then if %$d_M$% is the distance metric, we know that %$d_M(x_1, x_3) < d_M(x_1, x_2)$% and %$d_M(x_1, x_3) < d_M(x_2, x_3)$%. That is, it tells us that the first and the third song are closer together than they both are to the second song.
 
@@ -188,7 +188,7 @@ Now's the time to actually show the dataset, and start the learning.
 
 ## Dataset from the real world®
 
-The survey's answers are compiled into [a CSV file](https://raw.githubusercontent.com/CoucouInc/langoustin-articles/main/metric-learning/answer.csv).
+The survey's answers are compiled into [a CSV file](./answer.csv).
 
 The fields are as follow:
 * id: the row ID
@@ -201,7 +201,7 @@ The fields are as follow:
 
 The survey has been done using songs from the [Free Music Archive](https://freemusicarchive.org/), so they can all be redistributed freely. If you wish to download them (to run your own custom analysis on it, or to reproduce this post), it's available [here](https://lelele.io/dataset.7z).
 
-Now, we will assume that each song is represented by a numpy array of floats. You can also download [bliss-rs](https://github.com/Polochon-street/bliss-rs/)' CSV dump of the FMA songs [here](https://raw.githubusercontent.com/CoucouInc/langoustin-articles/main/metric-learning/analysis.csv).
+Now, we will assume that each song is represented by a numpy array of floats. You can also download [bliss-rs](https://github.com/Polochon-street/bliss-rs/)' CSV dump of the FMA songs [here](./analysis.csv).
 
 The following code sets up the training triplets:
 
@@ -283,7 +283,7 @@ print(
 )
 ```
 
-    Percentage of preserved distances for random values: 0.3261231281198003
+    Percentage of preserved distances for random values: 0.3610648918469218
     Percentage of preserved distances without optimization: 0.4525790349417637
     Percentage of preserved distances with optimization and overfitting: 0.562396006655574
 
@@ -320,7 +320,7 @@ for n, (train_index, test_index) in enumerate(kf.split(X), 1):
     accuracies_euclidean.append(euclidean_accuracy)
 ```
 
-    Started at 2021-09-15 19:41:20.187925
+    Started at 2021-09-19 17:02:39.057327
     Percentage of preserved distances for the 1th-fold is: 0.42 vs 0.42 for the Euclidean accuracy.
     Percentage of preserved distances for the 2th-fold is: 0.53 vs 0.46 for the Euclidean accuracy.
     Percentage of preserved distances for the 3th-fold is: 0.42 vs 0.38 for the Euclidean accuracy.
@@ -339,16 +339,13 @@ from sklearn.model_selection import KFold, train_test_split
 
 
 def optimize_lambdas(X):
-    lambdas = [0.01, 0.1, 1, 10]
+    lambdas = [0.01, 0.1, 1, 5]
 
     accuracies = [[] for _ in lambdas]
     accuracies_euclidean = []
 
-    print('Started {}'.format(datetime.now()))
-
     kf = KFold(n_splits=5, shuffle=True, random_state=42)
     for i, l in enumerate(lambdas):
-        print('Optimizing for lambda = {}...'.format(l))
         for n, (train_index, test_index) in enumerate(kf.split(X), 1):
             X_train, X_test = X[train_index], X[test_index]
             res, L = optimize(L0, X_train, sigma2, l)
@@ -356,19 +353,13 @@ def optimize_lambdas(X):
                 continue
             accuracy = percentage_preserved_distances(L, X_test)
             accuracies[i].append(accuracy)
-            print(
-                '\tDone for {0:d}th fold, accuracy is {1:.2f}.'
-                .format(n, accuracy)
-            )
+
     for n, (train_idex, test_index) in enumerate(kf.split(X), 1):
         X_train, X_test = X[train_index], X[test_index]
         accuracies_euclidean.append(
             percentage_preserved_distances(L0, X_test)
         )
-        print(
-            'Euclidean accuracy for {0:d}th fold is {1:.2f}.'
-            .format(n, percentage_preserved_distances(L0, X_test))
-        )
+
     mean_accuracies = np.array(
         [
             np.nanmean(local_accuracies)
@@ -384,7 +375,7 @@ def optimize_lambdas(X):
         .format(np.mean(accuracies_euclidean)),
     )
     print(
-        'Best mean accuracy is {0:.2f} for lambda = {1:d}\n'
+        'Best mean accuracy is {0:.2f} for lambda = {1:.2f}\n'
         .format(max_accuracy, l),
     )
 
@@ -396,54 +387,26 @@ def optimize_lambdas(X):
 res, L, design, test = optimize_lambdas(X)
 if not res:
     print('Error while optimizing the last design set.')
-
-print('Final optimization successful.')
-print(
-    'Percentage of distance preserved by the trained metric on the test set: {0:.3f} vs. '
-    '{1:.3f} for the Euclidean distance metric.'
-    .format(
-        percentage_preserved_distances(L, test),
-        percentage_preserved_distances(L0, test),
-    ),
-)
+else:    
+    print('Final optimization successful.')
+    print(
+        'Percentage of distance preserved by the trained metric on the test set: {0:.3f} vs. '
+        '{1:.3f} for the Euclidean distance metric.'
+        .format(
+            percentage_preserved_distances(L, test),
+            percentage_preserved_distances(L0, test),
+        ),
+    )
 ```
 
-    Started 2021-09-16 09:42:37.950777
-    Optimizing for lambda = 0.01...
-    	Done for 1th fold, accuracy is 0.45.
-    	Done for 2th fold, accuracy is 0.47.
-    	Done for 3th fold, accuracy is 0.36.
-    	Done for 4th fold, accuracy is 0.51.
-    	Done for 5th fold, accuracy is 0.49.
-    Optimizing for lambda = 0.1...
-    	Done for 1th fold, accuracy is 0.43.
-    	Done for 2th fold, accuracy is 0.48.
-    	Done for 3th fold, accuracy is 0.33.
-    	Done for 4th fold, accuracy is 0.50.
-    	Done for 5th fold, accuracy is 0.46.
-    Optimizing for lambda = 1...
-    	Done for 1th fold, accuracy is 0.51.
-    	Done for 2th fold, accuracy is 0.49.
-    	Done for 3th fold, accuracy is 0.33.
-    	Done for 4th fold, accuracy is 0.47.
-    	Done for 5th fold, accuracy is 0.50.
-    Optimizing for lambda = 10...
-    	Done for 1th fold, accuracy is 0.44.
-    	Done for 2th fold, accuracy is 0.42.
-    	Done for 3th fold, accuracy is 0.38.
-    Euclidean accuracy for 1th fold is 0.49.
-    Euclidean accuracy for 2th fold is 0.45.
-    Euclidean accuracy for 3th fold is 0.39.
-    Euclidean accuracy for 4th fold is 0.43.
-    Euclidean accuracy for 5th fold is 0.50.
     Mean accuracy for euclidean is: 0.45.
-    Best mean accuracy is 0.46 for lambda = 1
+    Best mean accuracy is 0.44 for lambda = 0.10
     
     Final optimization successful.
-    Percentage of distance preserved by the trained metric on the test set: 0.482 vs. 0.465 for the Euclidean distance metric.
+    Percentage of distance preserved by the trained metric on the test set: 0.512 vs. 0.545 for the Euclidean distance metric.
 
 
-As we can see, the trained metric performs only very slightly (around 1%) better than the non-trained, Euclidean distance metric. Let's see if we can improve that.
+As we can see, the trained metric performs doesn't perform better than the non-trained, Euclidean distance metric. Let's see if we can improve that.
 
 ## Small improvement on metric learning
 
@@ -476,7 +439,7 @@ triplets = [(songs[s1], songs[s2], songs[s3]) for s1, s2, s3 in named_triplets]
 X = np.array(triplets)
 
 design, test = train_test_split(X, test_size=0.2, shuffle=True, random_state=0)
-res, L = optimize(L0, design, sigma2, 10)
+res, L = optimize(L0, design, sigma2, 1)
 
 if not res:
     print('Error while optimizing the last design set.')
@@ -496,7 +459,7 @@ print(
     Percentage of distance preserved by the trained metric on the more coherent test set: 0.482 vs. 0.465 for the Euclidean distance metric.
 
 
-This filtered set performs slightly (~1%) better than the raw dataset, but really not by much, again.
+This filtered set performs slightly (~1%) better than the raw dataset, but not by much. 
 
 ## Conclusion
 
