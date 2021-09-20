@@ -4,9 +4,15 @@ Title: Auditory metric learning using training triplets
 
 # Auditory metric learning using training triplets
 
+## Pre-introduction
+
+A few things before starting, acting as a TL;DR in case you don't want to read the entire article and are here for the goodies: 
+* I'm making this post to publish the dataset I've used for my [thesis](https://lelele.io/thesis.pdf) (see    Chapter 4). A lot of people took their time to answer my survey, so it's only fair that I release their answers, so others can use it. It's available [here](https://raw.githubusercontent.com/CoucouInc/langoustin-articles/main/metric-learning/answer.csv). Songs from the Free Music Archive are available [here](https://lelele.io/dataset.7z).
+* The conclusion of the post is that this setup of metric learning with training triplets yields results barely better than no learning at all. However, I've also found that there were no code excerpts for metric learning with training triplets to be found whatsoever, so I thought it would be good to clean and release that as well. It didn't work for this use case, but it might just do the trick in other contexts, such as with a bigger dataset, or a more objective problem. 
+
 ## Introduction
 
-While developping [bliss](https://lelele.io/bliss.html), a program written to build "smart" playlists by putting together similar songs, I've come across the need to find a good distance metric to compare two songs, represented by vectors of floats. Each float represents one aspect (or one part of an aspect) of the song: tempo, timbre, chroma...
+While developping [bliss](https://lelele.io/bliss.html), a library written to build "smart" playlists by putting together similar songs, I've come across the need to find a good distance metric to compare two songs, represented by vectors of floats. Each float represents one aspect (or one part of an aspect) of the song: tempo, timbre, chroma...
 
 One of the most basic distance metric one could use to compute the distance between two songs is the [Euclidean distance](https://en.wikipedia.org/wiki/Euclidean_distance). While this method works quite well in practice, the issue is that it assumes each feature has the same weight as the others. Meaning, in our case, that for example the tempo of a song is as important as its tone when it comes to music similarity.
 
@@ -26,7 +32,7 @@ All that is left is then to find the coefficients of %$M$% that will yield the b
 As said before, the idea is to make playlists that most people will be happy with, so since it is such a subjective problem, we asked feedback from different people, in the form of an online survey.
 
 People were presented with three different, thirty seconds-long excerpts of songs, and had to point the one that they felt was the most dissimilar compared to the others:
-<img src="survey.png">
+<img src='https://raw.githubusercontent.com/CoucouInc/langoustin-articles/main/metric-learning/survey.png'>
 
 Each answer gives us the following information: given %$x_1$%, %$x_2$%, and %$x_3$% three songs, if the user picked %$x_2$% as the odd one out, then if %$d_M$% is the distance metric, we know that %$d_M(x_1, x_3) < d_M(x_1, x_2)$% and %$d_M(x_1, x_3) < d_M(x_2, x_3)$%. That is, it tells us that the first and the third song are closer together than they both are to the second song.
 
@@ -188,7 +194,7 @@ Now's the time to actually show the dataset, and start the learning.
 
 ## Dataset from the real world®
 
-The survey's answers are compiled into [a CSV file](./answer.csv).
+The survey's answers are compiled into [a CSV file](https://raw.githubusercontent.com/CoucouInc/langoustin-articles/main/metric-learning/answer.csv).
 
 The fields are as follow:
 * id: the row ID
@@ -201,7 +207,7 @@ The fields are as follow:
 
 The survey has been done using songs from the [Free Music Archive](https://freemusicarchive.org/), so they can all be redistributed freely. If you wish to download them (to run your own custom analysis on it, or to reproduce this post), it's available [here](https://lelele.io/dataset.7z).
 
-Now, we will assume that each song is represented by a numpy array of floats. You can also download [bliss-rs](https://github.com/Polochon-street/bliss-rs/)' CSV dump of the FMA songs [here](./analysis.csv).
+Now, we will assume that each song is represented by a numpy array of floats. You can also download [bliss-rs](https://github.com/Polochon-street/bliss-rs/)' CSV dump of the FMA songs [here](https://raw.githubusercontent.com/CoucouInc/langoustin-articles/main/metric-learning/analysis.csv).
 
 The following code sets up the training triplets:
 
